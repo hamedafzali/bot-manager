@@ -158,6 +158,203 @@ def create_app():
             'config': bot.config.to_dict()
         })
     
+    @app.route('/api/bots/<bot_id>/webhook', methods=['POST'])
+    def telegram_webhook(bot_id):
+        """Handle incoming Telegram messages via webhook"""
+        bot = manager.get_bot(bot_id)
+        if not bot:
+            return jsonify({'error': 'Bot not found'}), 404
+        
+        try:
+            # Get incoming message from Telegram
+            update = request.get_json()
+            if not update:
+                return jsonify({'error': 'No update data received'}), 400
+            
+            # Extract message information
+            message = update.get('message', {})
+            chat_id = message.get('chat', {}).get('id')
+            text = message.get('text', '')
+            user_info = message.get('from', {})
+            
+            if not chat_id or not text:
+                return jsonify({'error': 'Invalid message format'}), 400
+            
+            # Log the incoming message
+            app.logger.info(f"📨 Received message from Telegram for bot {bot_id}: {text}")
+            
+            # Process the message and get response
+            response_text = process_incoming_message(bot, text, user_info)
+            
+            # Send response back to user if needed
+            if response_text:
+                try:
+                    telegram_url = f"https://api.telegram.org/bot{bot.config.bot_token}/sendMessage"
+                    telegram_data = {
+                        'chat_id': chat_id,
+                        'text': response_text,
+                        'parse_mode': 'Markdown'
+                    }
+                    
+                    response = requests.post(telegram_url, json=telegram_data, timeout=10)
+                    if response.status_code == 200:
+                        result = response.json()
+                        if result.get('ok'):
+                            app.logger.info(f"✅ Response sent to user: {response_text}")
+                        else:
+                            app.logger.error(f"❌ Failed to send response: {result.get('description')}")
+                    else:
+                        app.logger.error(f"❌ HTTP error sending response: {response.status_code}")
+                except Exception as e:
+                    app.logger.error(f"❌ Error sending response: {e}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Webhook processed successfully',
+                'bot_id': bot_id,
+                'chat_id': chat_id
+            })
+            
+        except Exception as e:
+            app.logger.error(f"❌ Error processing webhook: {e}")
+            return jsonify({'error': 'Failed to process webhook'}), 500
+    
+    def process_incoming_message(bot, text, user_info):
+        """Process incoming message and return response if needed"""
+        text_lower = text.lower()
+        
+        # Basic command handling
+        if text_lower == '/start':
+            return f"🤖 Welcome to {bot.config.name}!\n\nI'm ready to assist you. Type /help for available commands."
+        
+        elif text_lower == '/help':
+            return """📋 Available Commands:
+/start - Start the bot
+/help - Show this help message
+/status - Check bot status
+/info - Get bot information"""
+        
+        elif text_lower == '/status':
+            return f"📊 Bot Status: {bot.status}\n📍 City: {bot.config.city_name}\n🌐 Language: {bot.config.news_language}"
+        
+        elif text_lower == '/info':
+            return f"ℹ️ Bot Information:\n🤖 Name: {bot.config.name}\n📍 City: {bot.config.city_name}\n🌐 Country: {bot.config.country_code}\n⏰ Interval: {bot.config.post_interval_minutes} minutes"
+        
+        elif text_lower.startswith('/'):
+            return "❓ Unknown command. Type /help for available commands."
+        
+        # Handle regular messages
+        elif text_lower == 'hello' or text_lower == 'hi':
+            return f"👋 Hello! I'm {bot.config.name}. How can I help you today?"
+        
+        # For other messages, you can implement custom logic
+        else:
+            return None  # Don't respond to every message
+    
+    @app.route('/api/bots/<bot_id>/send_message', methods=['POST'])
+    def send_message_to_telegram(bot_id):
+        """Send a message to Telegram via bot"""
+        bot = manager.get_bot(bot_id)
+        if not bot:
+            return jsonify({'error': 'Bot not found'}), 404
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No message data provided'}), 400
+            
+            message = data.get('message')
+            chat_id = data.get('chat_id', bot.config.telegram_chat_id)
+            parse_mode = data.get('parse_mode', 'Markdown')
+            
+            if not message:
+                return jsonify({'error': 'Message content is required'}), 400
+            
+            if not chat_id:
+                return jsonify({'error': 'Chat ID is required'}), 400
+            
+            # Send message to Telegram
+            telegram_url = f"https://api.telegram.org/bot{bot.config.bot_token}/sendMessage"
+            telegram_data = {
+                'chat_id': chat_id,
+                'text': message,
+                'parse_mode': parse_mode
+            }
+            
+            response = requests.post(telegram_url, json=telegram_data, timeout=10)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('ok'):
+                    message_id = result.get('result', {}).get('message_id')
+                    app.logger.info(f"✅ Message sent successfully via bot {bot_id} (ID: {message_id})")
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': 'Message sent successfully',
+                        'bot_id': bot_id,
+                        'chat_id': chat_id,
+                        'message_id': message_id,
+                        'sent_at': datetime.utcnow().isoformat()
+                    })
+                else:
+                    error_msg = result.get('description', 'Unknown error')
+                    app.logger.error(f"❌ Telegram API error: {error_msg}")
+                    return jsonify({'error': f'Telegram API error: {error_msg}'}), 400
+            else:
+                app.logger.error(f"❌ HTTP error sending message: {response.status_code}")
+                return jsonify({'error': f'HTTP error: {response.status_code}'}), 500
+                
+        except Exception as e:
+            app.logger.error(f"❌ Error sending message: {e}")
+            return jsonify({'error': 'Failed to send message'}), 500
+    
+    @app.route('/api/bots/<bot_id>/set_webhook', methods=['POST'])
+    def set_telegram_webhook(bot_id):
+        """Set webhook for Telegram bot"""
+        bot = manager.get_bot(bot_id)
+        if not bot:
+            return jsonify({'error': 'Bot not found'}), 404
+        
+        try:
+            data = request.get_json() or {}
+            webhook_url = data.get('webhook_url')
+            
+            if not webhook_url:
+                # Use default webhook URL
+                webhook_url = f"http://localhost:5002/api/bots/{bot_id}/webhook"
+            
+            # Set webhook via Telegram API
+            telegram_url = f"https://api.telegram.org/bot{bot.config.bot_token}/setWebhook"
+            telegram_data = {
+                'url': webhook_url,
+                'allowed_updates': ['message', 'callback_query']
+            }
+            
+            response = requests.post(telegram_url, json=telegram_data, timeout=10)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('ok'):
+                    app.logger.info(f"✅ Webhook set for bot {bot_id}: {webhook_url}")
+                    return jsonify({
+                        'success': True,
+                        'message': 'Webhook set successfully',
+                        'bot_id': bot_id,
+                        'webhook_url': webhook_url
+                    })
+                else:
+                    error_msg = result.get('description', 'Unknown error')
+                    app.logger.error(f"❌ Failed to set webhook: {error_msg}")
+                    return jsonify({'error': f'Failed to set webhook: {error_msg}'}), 400
+            else:
+                app.logger.error(f"❌ HTTP error setting webhook: {response.status_code}")
+                return jsonify({'error': f'HTTP error: {response.status_code}'}), 500
+                
+        except Exception as e:
+            app.logger.error(f"❌ Error setting webhook: {e}")
+            return jsonify({'error': 'Failed to set webhook'}), 500
+    
     @app.route('/api/bots/<bot_id>/stats', methods=['GET'])
     def get_bot_stats(bot_id):
         """Get bot statistics"""
