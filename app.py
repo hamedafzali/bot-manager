@@ -264,14 +264,16 @@ def create_app():
                 return jsonify({'error': 'No message data provided'}), 400
             
             message = data.get('message')
-            chat_id = data.get('chat_id', bot.config.telegram_chat_id)
             parse_mode = data.get('parse_mode', 'Markdown')
+            
+            # Use bot's default chat ID, allow override if explicitly provided
+            chat_id = data.get('chat_id') if data.get('chat_id') else bot.config.telegram_chat_id
             
             if not message:
                 return jsonify({'error': 'Message content is required'}), 400
             
             if not chat_id:
-                return jsonify({'error': 'Chat ID is required'}), 400
+                return jsonify({'error': 'Chat ID is required (not configured in bot)'}), 400
             
             # Send message to Telegram
             telegram_url = f"https://api.telegram.org/bot{bot.config.bot_token}/sendMessage"

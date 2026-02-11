@@ -300,10 +300,14 @@ Content-Type: application/json
 ```json
 {
   "message": "Hello, this is a test message!",
-  "chat_id": "-1001234567890",
   "parse_mode": "Markdown"
 }
 ```
+
+**Optional Parameters:**
+
+- `chat_id` (optional) - Override the bot's default chat ID
+- `parse_mode` (optional, default: "Markdown") - Message formatting
 
 **Response:**
 
@@ -608,7 +612,14 @@ curl -X POST http://localhost:5002/api/bots/{bot-id}/run
 # Get bot statistics
 curl -X GET http://localhost:5002/api/bots/{bot-id}/stats
 
-# Send a message to Telegram
+# Send a message to Telegram (uses bot's default chat ID)
+curl -X POST http://localhost:5002/api/bots/{bot-id}/send_message \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hello from Bot Manager API!"
+  }'
+
+# Send message with custom chat ID (override bot default)
 curl -X POST http://localhost:5002/api/bots/{bot-id}/send_message \
   -H "Content-Type: application/json" \
   -d '{
