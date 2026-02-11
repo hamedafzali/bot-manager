@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Manager Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-600 p-2 rounded-lg">
+                        <i class="fas fa-robot text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Bot Manager</h1>
+                        <p class="text-sm text-gray-600">Dashboard</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('add_bot') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    <i class="fas fa-plus mr-2"></i>Add Bot
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 pt-4">
+                {% for category, message in messages %}
+                    <div class="alert {% if category == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-green-100 border-green-400 text-green-700{% endif %} border px-4 py-3 rounded-lg mb-2">
+                        <div class="flex items-center">
+                            <i class="fas {% if category == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-2"></i>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Bots</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_bots if stats else 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <i class="fas fa-robots text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Active Bots</p>
+                        <p class="text-2xl font-bold text-green-600">{{ stats.active_bots if stats else 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <i class="fas fa-play-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Posts</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ stats.total_posts if stats else 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <i class="fas fa-paper-plane text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Cities Covered</p>
+                        <p class="text-2xl font-bold text-orange-600">{{ stats.cities_covered if stats else 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-orange-100 rounded-full">
+                        <i class="fas fa-globe text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bots Grid -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-cogs mr-2"></i>Your Bots
+                </h2>
+                <button onclick="location.reload()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+            </div>
+
+            {% if bots %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for bot in bots %}
+                    <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-shadow">
+                        <!-- Bot Header -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-robot text-white text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">{{ bot.config.name }}</h3>
+                                    <p class="text-sm text-gray-600">{{ bot.config.city_name }}, {{ bot.config.country_code }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                {% if bot.config.is_active %}
+                                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                {% else %}
+                                    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Bot Info -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="text-gray-600">Status</span>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full
+                                    {% if bot.status == 'idle' %}bg-blue-100 text-blue-800
+                                    {% elif bot.status == 'running' %}bg-yellow-100 text-yellow-800
+                                    {% elif bot.status == 'connected' %}bg-green-100 text-green-800
+                                    {% elif bot.status == 'error' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ bot.status|title }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="text-gray-600">Language</span>
+                                <span class="font-medium">{{ bot.config.news_language.upper() }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="text-gray-600">Interval</span>
+                                <span class="font-medium">{{ bot.config.post_interval_minutes }} min</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Posts</span>
+                                <span class="font-medium">{{ bot.total_posts }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Bot Actions -->
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('run_bot', bot_id=bot.id) }}" class="text-green-600 hover:text-green-800" title="Run Bot">
+                                    <i class="fas fa-play"></i>
+                                </a>
+                                <a href="{{ url_for('bot_details', bot_id=bot.id) }}" class="text-blue-600 hover:text-blue-800" title="View Details">
+                                    <i class="fas fa-chart-line"></i>
+                                </a>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('edit_bot', bot_id=bot.id) }}" class="text-gray-600 hover:text-gray-800" title="Edit Bot">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('delete_bot', bot_id=bot.id) }}" onsubmit="return confirm('Are you sure you want to delete this bot?')">
+                                    <button type="submit" class="text-red-600 hover:text-red-800" title="Delete Bot">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-12">
+                    <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-robot text-gray-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">No bots configured</h3>
+                    <p class="text-gray-600 mb-6">Get started by creating your first bot</p>
+                    <a href="{{ url_for('add_bot') }}" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Create Your First Bot
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit {{ bot.config.name }} - Bot Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .connection-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .connection-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+      .connection-card.selected {
+        border: 2px solid #667eea;
+        background: rgba(102, 126, 234, 0.1);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="glass-effect shadow-lg">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <div class="gradient-bg p-2 rounded-lg">
+              <i class="fas fa-robot text-white text-xl"></i>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">Bot Manager</h1>
+              <p class="text-sm text-gray-600">Edit Bot</p>
+            </div>
+          </div>
+          <a
+            href="{{ url_for('bot_details', bot_id=bot.id) }}"
+            class="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+          >
+            <i class="fas fa-arrow-left mr-1"></i>Back to Details
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="container mx-auto px-4 pt-4">
+      {% for category, message in messages %}
+      <div
+        class="glass-effect rounded-xl p-4 mb-2 {% if category == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-green-100 border-green-400 text-green-700{% endif %}"
+      >
+        <div class="flex items-center">
+          <i
+            class="fas {% if category == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-2"
+          ></i>
+          {{ message }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+      <div class="max-w-4xl mx-auto">
+        <div class="glass-effect rounded-xl shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-edit mr-2"></i>Edit Bot: {{ bot.config.name }}
+          </h2>
+
+          <form method="POST" class="space-y-8">
+            <!-- Bot Identity -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-robot mr-2"></i>Bot Identity
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Bot Name *</label
+                  >
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    value="{{ bot.config.name }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Description</label
+                  >
+                  <textarea
+                    name="description"
+                    rows="2"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="What does this bot do?"
+                  >
+{{ bot.config.description or '' }}</textarea
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Connection Configuration -->
+            <div class="bg-blue-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-plug mr-2"></i>Connection Configuration
+              </h3>
+
+              <!-- Connection Type Selection -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3"
+                  >Choose Connection Type</label
+                >
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div
+                    class="connection-card bg-white p-4 rounded-lg border border-gray-200 {% if bot.config.connection and bot.config.connection.connection_type == 'telegram' %}selected{% endif %}"
+                    onclick="selectConnection('telegram')"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"
+                      >
+                        <i class="fab fa-telegram text-blue-600"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-gray-800 text-sm">
+                          Telegram
+                        </h4>
+                        <p class="text-xs text-gray-600">Send to Telegram</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="connection-card bg-white p-4 rounded-lg border border-gray-200 {% if bot.config.connection and bot.config.connection.connection_type == 'webhook' %}selected{% endif %}"
+                    onclick="selectConnection('webhook')"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"
+                      >
+                        <i class="fas fa-link text-green-600"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-gray-800 text-sm">
+                          Webhook
+                        </h4>
+                        <p class="text-xs text-gray-600">Send to URL</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="connection-card bg-white p-4 rounded-lg border border-gray-200 {% if bot.config.connection and bot.config.connection.connection_type == 'email' %}selected{% endif %}"
+                    onclick="selectConnection('email')"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center"
+                      >
+                        <i class="fas fa-envelope text-purple-600"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-gray-800 text-sm">
+                          Email
+                        </h4>
+                        <p class="text-xs text-gray-600">Send via Email</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="hidden"
+                  name="connection_type"
+                  id="connection_type"
+                  value="telegram"
+                />
+              </div>
+
+              <!-- Telegram Configuration -->
+              <div
+                id="telegram-config"
+                class="space-y-4"
+                class="space-y-4 {% if not bot.config.bot_token %}hidden{% endif %}"
+              >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Bot Token *</label
+                    >
+                    <input
+                      type="text"
+                      name="telegram_bot_token"
+                      value="{{ bot.config.bot_token or '' }}"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="123456:ABC-DEF123456"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Chat ID *</label
+                    >
+                    <input
+                      type="text"
+                      name="telegram_chat_id"
+                      value="{{ bot.config.telegram_chat_id or '' }}"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="-1001234567890"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Webhook Configuration -->
+              <div id="webhook-config" class="space-y-4 hidden">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Webhook URL *</label
+                  >
+                  <input
+                    type="url"
+                    name="webhook_url"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://api.example.com/webhook"
+                  />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >API Key</label
+                    >
+                    <input
+                      type="password"
+                      name="webhook_api_key"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Optional API key"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Secret</label
+                    >
+                    <input
+                      type="password"
+                      name="webhook_secret"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Optional secret"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Test Connection -->
+            <div class="bg-yellow-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-vial mr-2"></i>Test Connection
+              </h3>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600">
+                    Send a test message to verify bot is working
+                  </p>
+                  <div class="mt-2">
+                    <input
+                      type="text"
+                      id="testMessage"
+                      class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter test message..."
+                      value="🤖 Bot is online and ready!"
+                    />
+                    <button
+                      type="button"
+                      onclick="testBot()"
+                      class="ml-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg"
+                    >
+                      <i class="fas fa-paper-plane mr-1"></i>Send Test
+                    </button>
+                  </div>
+                </div>
+                <div id="testResult" class="hidden">
+                  <!-- Test result will appear here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Bot Status -->
+            <div class="bg-purple-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-toggle-on mr-2"></i>Bot Status
+              </h3>
+
+              <div class="flex items-center">
+                <label class="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    {%
+                    if
+                    bot.config.is_active
+                    %}checked{%
+                    endif
+                    %}
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span class="ml-2 text-sm font-medium text-gray-700"
+                    >Active Bot</span
+                  >
+                </label>
+                <p class="ml-4 text-sm text-gray-600">
+                  Inactive bots won't process data
+                </p>
+              </div>
+            </div>
+
+            <!-- Bot Actions -->
+            <div class="bg-red-50 rounded-lg p-6 border-2 border-red-200">
+              <h3
+                class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+              >
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Emergency Actions
+                <span
+                  class="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full"
+                  >NEW</span
+                >
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <button
+                    type="button"
+                    onclick="stopBot()"
+                    class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg"
+                  >
+                    <i class="fas fa-stop-circle mr-2"></i>Stop Bot
+                  </button>
+                  <p class="text-sm text-gray-600 mt-2">
+                    Immediately stop all bot operations
+                  </p>
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    onclick="restartBot()"
+                    class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg"
+                  >
+                    <i class="fas fa-play-circle mr-2"></i>Restart Bot
+                  </button>
+                  <p class="text-sm text-gray-600 mt-2">
+                    Resume bot operations
+                  </p>
+                </div>
+              </div>
+
+              <div id="actionResult" class="hidden mt-4">
+                <!-- Action result will appear here -->
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-4 pt-6">
+              <a
+                href="{{ url_for('bot_details', bot_id=bot.id) }}"
+                class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Cancel
+              </a>
+              <button
+                type="submit"
+                class="px-6 py-3 gradient-bg hover:opacity-90 text-white font-medium rounded-lg"
+              >
+                <i class="fas fa-save mr-2"></i>Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      function selectConnection(type) {
+        // Update hidden input
+        document.getElementById("connection_type").value = type;
+
+        // Update UI
+        document.querySelectorAll(".connection-card").forEach((card) => {
+          card.classList.remove("selected");
+        });
+        event.currentTarget.classList.add("selected");
+
+        // Show/hide configuration
+        document
+          .getElementById("telegram-config")
+          .classList.toggle("hidden", type !== "telegram");
+        document
+          .getElementById("webhook-config")
+          .classList.toggle("hidden", type !== "webhook");
+      }
+
+      async function stopBot() {
+        const botId = "{{ bot.id }}";
+
+        if (
+          !confirm(
+            "⚠️ Are you sure you want to STOP this bot?\\n\\nThis will immediately halt all bot operations and message processing.",
+          )
+        ) {
+          return;
+        }
+
+        showResult("Stopping bot...", "loading");
+
+        try {
+          const response = await fetch(`/bot/${botId}/stop`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showResult(
+              "✅ Bot stopped successfully! All operations halted.",
+              "success",
+            );
+            // Update status indicator
+            setTimeout(() => location.reload(), 2000);
+          } else {
+            showResult(`❌ Error stopping bot: ${result.error}`, "error");
+          }
+        } catch (error) {
+          showResult(`❌ Connection error: ${error.message}`, "error");
+        }
+      }
+
+      async function restartBot() {
+        const botId = "{{ bot.id }}";
+
+        if (
+          !confirm(
+            "🔄 Are you sure you want to RESTART this bot?\\n\\nThis will resume all bot operations and message processing.",
+          )
+        ) {
+          return;
+        }
+
+        showResult("Restarting bot...", "loading");
+
+        try {
+          const response = await fetch(`/bot/${botId}/restart`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showResult(
+              "✅ Bot restarted successfully! Operations resumed.",
+              "success",
+            );
+            // Update status indicator
+            setTimeout(() => location.reload(), 2000);
+          } else {
+            showResult(`❌ Error restarting bot: ${result.error}`, "error");
+          }
+        } catch (error) {
+          showResult(`❌ Connection error: ${error.message}`, "error");
+        }
+      }
+
+      async function testBot() {
+        const message = document.getElementById("testMessage").value;
+        const resultDiv = document.getElementById("testResult");
+        const botId = "{{ bot.id }}";
+
+        if (!message.trim()) {
+          showResult("Please enter a test message", "error");
+          return;
+        }
+
+        // Show loading
+        showResult("Testing connection...", "loading");
+
+        try {
+          const response = await fetch(`/bot/${botId}/test`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message: message }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showResult("✅ Test message sent successfully!", "success");
+          } else {
+            showResult(`❌ Error: ${result.error}`, "error");
+          }
+        } catch (error) {
+          showResult(`❌ Connection error: ${error.message}`, "error");
+        }
+      }
+
+      function showResult(message, type) {
+        const resultDiv =
+          document.getElementById("testResult") ||
+          document.getElementById("actionResult");
+        resultDiv.classList.remove("hidden");
+
+        let className = "";
+        if (type === "success") {
+          className = "bg-green-100 border-green-400 text-green-700";
+        } else if (type === "error") {
+          className = "bg-red-100 border-red-400 text-red-700";
+        } else if (type === "loading") {
+          className = "bg-yellow-100 border-yellow-400 text-yellow-700";
+        }
+
+        resultDiv.className = `border px-4 py-3 rounded-lg mb-2 ${className}`;
+        resultDiv.innerHTML = `
+          <div class="flex items-center">
+            <i class="fas ${type === "loading" ? "fa-spinner fa-spin" : type === "success" ? "fa-check-circle" : "fa-exclamation-circle"} mr-2"></i>
+            ${message}
+          </div>
+        `;
+      }
+    </script>
+  </body>
+</html>

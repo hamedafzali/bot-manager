@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Bot - Bot Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .connection-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .connection-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+      .connection-card.selected {
+        border: 2px solid #667eea;
+        background: rgba(102, 126, 234, 0.1);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="glass-effect shadow-lg">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <div class="gradient-bg p-2 rounded-lg">
+              <i class="fas fa-robot text-white text-xl"></i>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">Bot Manager</h1>
+              <p class="text-sm text-gray-600">Create New Bot</p>
+            </div>
+          </div>
+          <a
+            href="{{ url_for('dashboard') }}"
+            class="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+          >
+            <i class="fas fa-home mr-1"></i>Dashboard
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+      <div class="max-w-4xl mx-auto">
+        <div class="glass-effect rounded-xl shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-plus-circle mr-2"></i>Create New Bot
+          </h2>
+
+          <form method="POST" class="space-y-8">
+            <!-- Bot Identity -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-robot mr-2"></i>Bot Identity
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Bot Name *</label
+                  >
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., My Awesome Bot"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Description</label
+                  >
+                  <textarea
+                    name="description"
+                    rows="2"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="What does this bot do?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connection Configuration -->
+            <div class="bg-blue-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-plug mr-2"></i>Connection Configuration
+              </h3>
+
+              <!-- Connection Type Selection -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3"
+                  >Choose Connection Type</label
+                >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div
+                    class="connection-card bg-white p-4 rounded-lg border border-gray-200"
+                    onclick="selectConnection('telegram')"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"
+                      >
+                        <i class="fab fa-telegram text-blue-600"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-gray-800">
+                          Telegram Bot
+                        </h4>
+                        <p class="text-sm text-gray-600">
+                          Send messages to Telegram channels
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="connection-card bg-white p-4 rounded-lg border border-gray-200"
+                    onclick="selectConnection('webhook')"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"
+                      >
+                        <i class="fas fa-link text-green-600"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-gray-800">Webhook</h4>
+                        <p class="text-sm text-gray-600">
+                          Send to any HTTP endpoint
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="hidden"
+                  name="connection_type"
+                  id="connection_type"
+                  required
+                />
+              </div>
+
+              <!-- Telegram Configuration -->
+              <div id="telegram-config" class="hidden space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Bot Token *</label
+                    >
+                    <input
+                      type="text"
+                      name="telegram_bot_token"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="123456:ABC-DEF123456"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Chat ID *</label
+                    >
+                    <input
+                      type="text"
+                      name="telegram_chat_id"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="-1001234567890"
+                    />
+                  </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                  <label class="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="telegram_parse_mode"
+                      value="Markdown"
+                      checked
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span class="ml-2 text-sm font-medium text-gray-700"
+                      >Enable Markdown</span
+                    >
+                  </label>
+                  <label class="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="telegram_disable_preview"
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span class="ml-2 text-sm font-medium text-gray-700"
+                      >Disable Link Preview</span
+                    >
+                  </label>
+                </div>
+              </div>
+
+              <!-- Webhook Configuration -->
+              <div id="webhook-config" class="hidden space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Webhook URL *</label
+                  >
+                  <input
+                    type="url"
+                    name="webhook_url"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://api.example.com/webhook"
+                  />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >API Key</label
+                    >
+                    <input
+                      type="password"
+                      name="webhook_api_key"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Optional API key"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Secret</label
+                    >
+                    <input
+                      type="password"
+                      name="webhook_secret"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Optional secret"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Sources -->
+            <div class="bg-green-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-database mr-2"></i>Data Sources
+              </h3>
+
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Add Data Sources</label
+                  >
+                  <button
+                    type="button"
+                    onclick="addDataSource()"
+                    class="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
+                  >
+                    <i class="fas fa-plus mr-1"></i>Add Source
+                  </button>
+                </div>
+
+                <div id="data-sources" class="space-y-3">
+                  <!-- Default RSS source -->
+                  <div
+                    class="data-source bg-white p-4 rounded-lg border border-gray-200"
+                  >
+                    <div class="flex items-center justify-between mb-3">
+                      <select
+                        class="source-type text-sm font-medium text-gray-700 border border-gray-300 rounded px-2 py-1"
+                      >
+                        <option value="rss">RSS Feed</option>
+                        <option value="api">API</option>
+                        <option value="webhook">Webhook</option>
+                      </select>
+                      <button
+                        type="button"
+                        onclick="removeDataSource(this)"
+                        class="text-red-600 hover:text-red-800"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        placeholder="URL/Endpoint"
+                        class="source-url w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="API Key (optional)"
+                        class="source-key w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bot Status -->
+            <div class="bg-purple-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-toggle-on mr-2"></i>Bot Status
+              </h3>
+
+              <div class="flex items-center">
+                <label class="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    checked
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span class="ml-2 text-sm font-medium text-gray-700"
+                    >Active Bot</span
+                  >
+                </label>
+                <p class="ml-4 text-sm text-gray-600">
+                  Inactive bots won't process data
+                </p>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-4 pt-6">
+              <a
+                href="{{ url_for('dashboard') }}"
+                class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Cancel
+              </a>
+              <button
+                type="submit"
+                class="px-6 py-3 gradient-bg hover:opacity-90 text-white font-medium rounded-lg"
+              >
+                <i class="fas fa-plus mr-2"></i>Create Bot
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      function selectConnection(type) {
+        // Update hidden input
+        document.getElementById("connection_type").value = type;
+
+        // Update UI
+        document.querySelectorAll(".connection-card").forEach((card) => {
+          card.classList.remove("selected");
+        });
+        event.currentTarget.classList.add("selected");
+
+        // Show/hide configuration
+        document
+          .getElementById("telegram-config")
+          .classList.toggle("hidden", type !== "telegram");
+        document
+          .getElementById("webhook-config")
+          .classList.toggle("hidden", type !== "webhook");
+      }
+
+      function addDataSource() {
+        const container = document.getElementById("data-sources");
+        const newSource = document.createElement("div");
+        newSource.className =
+          "data-source bg-white p-4 rounded-lg border border-gray-200";
+        newSource.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <select class="source-type text-sm font-medium text-gray-700 border border-gray-300 rounded px-2 py-1">
+                        <option value="rss">RSS Feed</option>
+                        <option value="api">API</option>
+                        <option value="webhook">Webhook</option>
+                    </select>
+                    <button type="button" onclick="removeDataSource(this)" 
+                        class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" placeholder="URL/Endpoint" 
+                        class="source-url w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <input type="text" placeholder="API Key (optional)" 
+                        class="source-key w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+            `;
+        container.appendChild(newSource);
+      }
+
+      function removeDataSource(button) {
+        button.closest(".data-source").remove();
+      }
+    </script>
+  </body>
+</html>

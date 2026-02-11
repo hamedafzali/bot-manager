@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Bot - Bot Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .connection-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .connection-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .connection-card.selected {
+            border: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="glass-effect shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="gradient-bg p-2 rounded-lg">
+                        <i class="fas fa-robot text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Bot Manager</h1>
+                        <p class="text-sm text-gray-600">Create New Bot</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-home mr-1"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-effect rounded-xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-plus-circle mr-2"></i>Create New Bot
+                </h2>
+
+                <form method="POST" class="space-y-8">
+                    <!-- Bot Identity -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-robot mr-2"></i>Bot Identity
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Bot Name *</label>
+                                <input type="text" name="name" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="e.g., My Awesome Bot">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea name="description" rows="2"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="What does this bot do?"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bot Endpoints -->
+                    <div class="bg-blue-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-exchange-alt mr-2"></i>Bot Endpoints
+                        </h3>
+                        
+                        <div class="space-y-6">
+                            <!-- Receive Endpoint -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-arrow-down mr-1"></i>Receive Endpoint (Data IN)
+                                </label>
+                                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <code class="text-sm bg-gray-100 px-2 py-1 rounded">
+                                            https://your-domain.com/bot/{bot-id}/receive
+                                        </code>
+                                        <button type="button" onclick="copyReceiveEndpoint()" 
+                                            class="text-blue-600 hover:text-blue-800 text-sm">
+                                            <i class="fas fa-copy mr-1"></i>Copy
+                                        </button>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Send data to this endpoint via POST request</p>
+                                </div>
+                            </div>
+
+                            <!-- Send Configuration -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-arrow-up mr-1"></i>Send Configuration (Data OUT)
+                                </label>
+                                
+                                <!-- Send Type Selection -->
+                                <div class="mb-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="connection-card bg-white p-4 rounded-lg border border-gray-200" 
+                                             onclick="selectSendType('telegram')">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                    <i class="fab fa-telegram text-blue-600 text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-semibold text-gray-800 text-sm">Telegram</h4>
+                                                    <p class="text-xs text-gray-600">Send to Telegram</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="connection-card bg-white p-4 rounded-lg border border-gray-200" 
+                                             onclick="selectSendType('webhook')">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                    <i class="fas fa-link text-green-600 text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-semibold text-gray-800 text-sm">Webhook</h4>
+                                                    <p class="text-xs text-gray-600">Send to URL</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="connection-card bg-white p-4 rounded-lg border border-gray-200" 
+                                             onclick="selectSendType('email')">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                                    <i class="fas fa-envelope text-purple-600 text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-semibold text-gray-800 text-sm">Email</h4>
+                                                    <p class="text-xs text-gray-600">Send via Email</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="send_type" id="send_type" required>
+                                </div>
+
+                                <!-- Telegram Send Config -->
+                                <div id="telegram-send-config" class="hidden space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Bot Token *</label>
+                                            <input type="text" name="telegram_bot_token"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="123456:ABC-DEF123456">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Chat ID *</label>
+                                            <input type="text" name="telegram_chat_id"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="-1001234567890">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Webhook Send Config -->
+                                <div id="webhook-send-config" class="hidden space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Webhook URL *</label>
+                                        <input type="url" name="webhook_url"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="https://api.example.com/webhook">
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                                            <input type="password" name="webhook_api_key"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Optional API key">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Secret</label>
+                                            <input type="password" name="webhook_secret"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Optional secret">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Email Send Config -->
+                                <div id="email-send-config" class="hidden space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">SMTP Server *</label>
+                                            <input type="text" name="smtp_server"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="smtp.gmail.com">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Port</label>
+                                            <input type="number" name="smtp_port" value="587"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                            <input type="email" name="email_address"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="bot@example.com">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                            <input type="password" name="email_password"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Email password">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Recipient Email *</label>
+                                        <input type="email" name="recipient_email"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="recipient@example.com">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bot Status -->
+                    <div class="bg-purple-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-toggle-on mr-2"></i>Bot Status
+                        </h3>
+                        
+                        <div class="flex items-center">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="is_active" checked
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="ml-2 text-sm font-medium text-gray-700">Active Bot</span>
+                            </label>
+                            <p class="ml-4 text-sm text-gray-600">Inactive bots won't process data</p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end space-x-4 pt-6">
+                        <a href="{{ url_for('dashboard') }}" 
+                            class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                            class="px-6 py-3 gradient-bg hover:opacity-90 text-white font-medium rounded-lg">
+                            <i class="fas fa-plus mr-2"></i>Create Bot
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function selectSendType(type) {
+            // Update hidden input
+            document.getElementById('send_type').value = type;
+            
+            // Update UI
+            document.querySelectorAll('.connection-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Show/hide configuration
+            document.getElementById('telegram-send-config').classList.toggle('hidden', type !== 'telegram');
+            document.getElementById('webhook-send-config').classList.toggle('hidden', type !== 'webhook');
+            document.getElementById('email-send-config').classList.toggle('hidden', type !== 'email');
+        }
+        
+        function copyReceiveEndpoint() {
+            const endpoint = 'https://your-domain.com/bot/{bot-id}/receive';
+            navigator.clipboard.writeText(endpoint).then(() => {
+                alert('Receive endpoint copied!');
+            });
+        }
+    </script>
+</body>
+</html>

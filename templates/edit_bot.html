@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit {{ bot.config.name }} - Bot Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      .action-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        color: white;
+        transition: all 0.3s ease;
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .action-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .action-button:hover::before {
+        left: 100%;
+      }
+
+      .save-button {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      }
+
+      .save-button:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        transform: scale(1.05);
+      }
+
+      .cancel-button {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+      }
+
+      .cancel-button:hover {
+        background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+        box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+        transform: scale(1.05);
+      }
+
+      .button-icon {
+        transition: transform 0.2s;
+        margin-right: 0.5rem;
+      }
+
+      .action-button:hover .button-icon {
+        transform: scale(1.2);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="glass-effect shadow-lg">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <div class="gradient-bg p-2 rounded-lg">
+              <i class="fas fa-robot text-white text-xl"></i>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">Bot Manager</h1>
+              <p class="text-sm text-gray-600">Edit Bot</p>
+            </div>
+          </div>
+          <a
+            href="{{ url_for('dashboard') }}"
+            class="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+          >
+            <i class="fas fa-arrow-left mr-1"></i>Back to Details
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="container mx-auto px-4 pt-4">
+      {% for category, message in messages %}
+      <div
+        class="glass-effect rounded-xl p-4 mb-2 {% if category == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-green-100 border-green-400 text-green-700{% endif %}"
+      >
+        <div class="flex items-center">
+          <i
+            class="fas {% if category == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-2"
+          ></i>
+          {{ message }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+      <div class="max-w-4xl mx-auto">
+        <div class="glass-effect rounded-xl shadow-lg p-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-edit mr-2"></i>Edit Bot: {{ bot.config.name }}
+          </h2>
+
+          <form method="POST" class="space-y-8">
+            <!-- Bot Identity -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-robot mr-2"></i>Bot Identity
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Bot Name *</label
+                  >
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    value="{{ bot.config.name }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Description</label
+                  >
+                  <textarea
+                    name="description"
+                    rows="2"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="What does this bot do?"
+                  >
+{{ bot.config.description or '' }}</textarea
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Telegram Configuration -->
+            <div class="bg-blue-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-plug mr-2"></i>Telegram Configuration
+              </h3>
+
+              <!-- Telegram Configuration -->
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Bot Token *</label
+                    >
+                    <input
+                      type="text"
+                      name="telegram_bot_token"
+                      value="{{ bot.config.bot_token or '' }}"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="123456:ABC-DEF123456"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >Chat ID *</label
+                    >
+                    <input
+                      type="text"
+                      name="telegram_chat_id"
+                      value="{{ bot.config.telegram_chat_id or '' }}"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="-1001234567890"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bot Status -->
+            <div class="bg-purple-50 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-toggle-on mr-2"></i>Bot Status
+              </h3>
+
+              <div class="flex items-center">
+                <label class="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    {%
+                    if
+                    bot.config.is_active
+                    %}checked{%
+                    endif
+                    %}
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span class="ml-2 text-sm font-medium text-gray-700"
+                    >Active Bot</span
+                  >
+                </label>
+                <p class="ml-4 text-sm text-gray-600">
+                  Inactive bots won't process data
+                </p>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-4 pt-6">
+              <a
+                href="{{ url_for('bot_details', bot_id=bot.id) }}"
+                class="action-button cancel-button"
+              >
+                <i class="fas fa-times button-icon"></i>
+                Cancel
+              </a>
+              <button type="submit" class="action-button save-button">
+                <i class="fas fa-save button-icon"></i>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      function selectConnection(type) {
+        document.getElementById("connection_type").value = type;
+
+        document.querySelectorAll(".connection-card").forEach((card) => {
+          card.classList.remove("selected");
+        });
+        event.currentTarget.classList.add("selected");
+
+        document
+          .getElementById("telegram-config")
+          .classList.toggle("hidden", type !== "telegram");
+        document
+          .getElementById("webhook-config")
+          .classList.toggle("hidden", type !== "webhook");
+      }
+
+      async function restartBot() {
+        const botId = "{{ bot.id }}";
+
+        if (
+          !confirm(
+            "🔄 Are you sure you want to RESTART this bot?\\n\\nThis will resume all bot operations and message processing.",
+          )
+        ) {
+          return;
+        }
+
+        showResult("Restarting bot...", "loading");
+
+        try {
+          const response = await fetch("/bot/" + botId + "/status", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: "idle",
+              error_message: null,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showResult(
+              "✅ Bot restarted successfully! Operations resumed.",
+              "success",
+            );
+            setTimeout(() => location.reload(), 2000);
+          } else {
+            showResult("❌ Error restarting bot: " + result.error, "error");
+          }
+        } catch (error) {
+          showResult("❌ Connection error: " + error.message, "error");
+        }
+      }
+
+      function showResult(message, type) {
+        const resultDiv = document.getElementById("actionResult");
+        resultDiv.classList.remove("hidden");
+
+        let className = "";
+        if (type === "success") {
+          className = "bg-green-100 border-green-400 text-green-700";
+        } else if (type === "error") {
+          className = "bg-red-100 border-red-400 text-red-700";
+        } else if (type === "loading") {
+          className = "bg-yellow-100 border-yellow-400 text-yellow-700";
+        }
+
+        resultDiv.className = "border px-4 py-3 rounded-lg mb-2 " + className;
+        resultDiv.innerHTML =
+          '<div class="flex items-center"><i class="fas ' +
+          (type === "loading"
+            ? "fa-spinner fa-spin"
+            : type === "success"
+              ? "fa-check-circle"
+              : "fa-exclamation-circle") +
+          ' mr-2"></i>' +
+          message +
+          "</div>";
+      }
+    </script>
+  </body>
+</html>
